@@ -1,0 +1,423 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Neon Pong Online</title>
+
+<style>
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: #10131d;
+  color: #f5f7ff;
+  font-family: Arial, sans-serif;
+  text-align: center;
+  padding: 22px 12px;
+}
+h1 {
+  color: #55f7ff;
+  text-shadow: 0 0 15px #00d9ff;
+  margin: 8px;
+}
+p { color: #bdc7db; }
+.panel {
+  max-width: 950px;
+  margin: 16px auto;
+  padding: 14px;
+  border: 1px solid #35415c;
+  border-radius: 12px;
+  background: #191e2c;
+}
+button, input {
+  padding: 11px 13px;
+  margin: 5px;
+  border-radius: 7px;
+  border: 1px solid #52617d;
+  font-size: 15px;
+}
+button {
+  background: #263b56;
+  color: white;
+  cursor: pointer;
+}
+button:hover { background: #17617a; }
+input {
+  background: #0e1420;
+  color: white;
+  width: 150px;
+  text-transform: uppercase;
+}
+#status { min-height: 24px; color: #70f7ce; }
+#roomCode {
+  color: #ffe66d;
+  font-size: 24px;
+  letter-spacing: 5px;
+  font-weight: bold;
+}
+canvas {
+  display: block;
+  width: 100%;
+  max-width: 900px;
+  margin: 14px auto;
+  background: #090d15;
+  border: 2px solid #394763;
+  border-radius: 8px;
+  box-shadow: 0 0 18px #00bcd455;
+  cursor: crosshair;
+  touch-action: none;
+}
+.small { font-size: 13px; color: #aab6cc; }
+</style>
+</head>
+
+<body>
+<h1>NEON PONG</h1>
+<p>Move your mouse over the game to control your paddle.</p>
+
+<div class="panel">
+  <button id="cpuBtn">Play vs Computer</button>
+  <button id="createBtn">Create Online Room</button>
+  <input id="codeInput" maxlength="5" placeholder="ROOM CODE">
+  <button id="joinBtn">Join Room</button>
+  <p id="status">Choose a game mode to begin.</p>
+  <div id="roomCode"></div>
+  <p class="small">Online: the host controls the left paddle; the guest controls the right.</p>
+</div>
+
+<canvas id="game" width="900" height="500"></canvas>
+
+<div class="panel">
+  <p>First to 11 points wins.</p>
+  <button id="restartBtn">Restart Match</button>
+  <p class="small">Online play requires an internet connection. Keep this page open while playing.</p>
+</div>
+
+<!-- PeerJS connects players through WebRTC -->
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+const statusEl = document.getElementById("status");
+const roomEl = document.getElementById("roomCode");
+
+const W = canvas.width, H = canvas.height;
+const paddleH = 100, paddleW = 12, ballR = 9;
+const WIN_SCORE = 11;
+
+let mode = "cpu";
+let role = "host";
+let peer = null, conn = null;
+let onlineReady = false;
+let lastTime = 0, sendTime = 0;
+let world;
+
+function freshWorld() {
+  return {
+    leftY: H / 2,
+    rightY: H / 2,
+    ball: { x: W / 2, y: H / 2, vx: 320, vy: 170 },
+    leftScore: 0,
+    rightScore: 0,
+    gameOver: false
+  };
+}
+
+function resetBall(direction) {
+  world.ball = {
+    x: W / 2, y: H / 2,
+    vx: 320 * direction,
+    vy: (Math.random() * 180) - 90
+  };
+}
+
+function setStatus(message) {
+  statusEl.textContent = message;
+}
+
+function closeOnline() {
+  onlineReady = false;
+  if (conn) { try { conn.close(); } catch (_) {} }
+  if (peer) { try { peer.destroy(); } catch (_) {} }
+  conn = null;
+  peer = null;
+  roomEl.textContent = "";
+}
+
+function startCPU() {
+  closeOnline();
+  mode = "cpu";
+  role = "host";
+  world = freshWorld();
+  setStatus("Playing against the computer.");
+}
+
+function randomCode() {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let code = "";
+  for (let i = 0; i < 5; i++) {
+    code += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return code;
+}
+
+function createRoom() {
+  closeOnline();
+  mode = "online";
+  role = "host";
+  world = freshWorld();
+  setStatus("Creating your room...");
+  roomEl.textContent = "";
+
+  const code = randomCode();
+  peer = new Peer("neonpong" + code);
+
+  peer.on("open", () => {
+    roomEl.textContent = "ROOM CODE: " + code;
+    setStatus("Room ready. Send your friend the code and this website link.");
+  });
+
+  peer.on("connection", incoming => {
+    if (conn) {
+      incoming.close();
+      return;
+    }
+    setupConnection(incoming);
+  });
+
+  peer.on("error", err => {
+    setStatus("Connection error: " + err.type +
+      ". Try creating a room again.");
+  });
+}
+
+function joinRoom() {
+  const code = document.getElementById("codeInput").value
+    .trim().toUpperCase();
+
+  if (!/^[A-HJ-NP-Z2-9]{5}$/.test(code)) {
+    setStatus("Enter a valid five-character room code.");
+    return;
+  }
+
+  closeOnline();
+  mode = "online";
+  role = "guest";
+  world = freshWorld();
+  setStatus("Connecting to room " + code + "...");
+  roomEl.textContent = "ROOM CODE: " + code;
+
+  peer = new Peer();
+
+  peer.on("open", () => {
+    const outgoing = peer.connect("neonpong" + code, {
+      reliable: true
+    });
+    setupConnection(outgoing);
+  });
+
+  peer.on("error", err => {
+    setStatus("Could not connect: " + err.type +
+      ". Check the code and try again.");
+  });
+}
+
+function setupConnection(connection) {
+  conn = connection;
+
+  conn.on("open", () => {
+    onlineReady = true;
+    setStatus(role === "host"
+      ? "Friend connected! You control the left paddle."
+      : "Connected! You control the right paddle.");
+  });
+
+  conn.on("data", data => {
+    if (!data || typeof data !== "object") return;
+
+    if (role === "host" && data.type === "paddle") {
+      if (Number.isFinite(data.y)) {
+        world.rightY = clamp(data.y, paddleH / 2, H - paddleH / 2);
+      }
+    }
+
+    if (role === "guest" && data.type === "state" && data.world) {
+      world = data.world;
+    }
+  });
+
+  conn.on("close", () => {
+    onlineReady = false;
+    setStatus("Your friend disconnected.");
+  });
+
+  conn.on("error", () => {
+    setStatus("Connection problem. Try creating a new room.");
+  });
+}
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+canvas.addEventListener("pointermove", event => {
+  const rect = canvas.getBoundingClientRect();
+  const y = (event.clientY - rect.top) * H / rect.height;
+  const safeY = clamp(y, paddleH / 2, H - paddleH / 2);
+
+  if (mode === "online" && role === "guest") {
+    if (conn && conn.open) conn.send({ type: "paddle", y: safeY });
+  } else {
+    world.leftY = safeY;
+  }
+});
+
+function update(dt) {
+  if (world.gameOver) return;
+
+  // Computer moves towards the ball in single-player mode.
+  if (mode === "cpu") {
+    const target = world.ball.y;
+    world.rightY += clamp(target - world.rightY, -300 * dt, 300 * dt);
+    world.rightY = clamp(world.rightY, paddleH / 2, H - paddleH / 2);
+  }
+
+  const b = world.ball;
+  b.x += b.vx * dt;
+  b.y += b.vy * dt;
+
+  // Gradually increase speed over time.
+  const speedGrowth = Math.pow(1.025, dt);
+  b.vx *= speedGrowth;
+  b.vy *= speedGrowth;
+
+  if (b.y < ballR || b.y > H - ballR) {
+    b.vy *= -1;
+    b.y = clamp(b.y, ballR, H - ballR);
+  }
+
+  // Left paddle.
+  if (b.vx < 0 && b.x - ballR <= 45 + paddleW &&
+      b.x > 35 && Math.abs(b.y - world.leftY) < paddleH / 2 + ballR) {
+    b.x = 45 + paddleW + ballR;
+    b.vx = Math.min(Math.abs(b.vx) * 1.04, 750);
+    b.vy += (b.y - world.leftY) * 4;
+    b.vx = Math.abs(b.vx);
+  }
+
+  // Right paddle.
+  if (b.vx > 0 && b.x + ballR >= W - 45 - paddleW &&
+      b.x < W - 35 && Math.abs(b.y - world.rightY) < paddleH / 2 + ballR) {
+    b.x = W - 45 - paddleW - ballR;
+    b.vx = -Math.min(Math.abs(b.vx) * 1.04, 750);
+    b.vy += (b.y - world.rightY) * 4;
+  }
+
+  if (b.x < -ballR) {
+    world.rightScore++;
+    if (world.rightScore >= WIN_SCORE) world.gameOver = true;
+    else resetBall(1);
+  }
+
+  if (b.x > W + ballR) {
+    world.leftScore++;
+    if (world.leftScore >= WIN_SCORE) world.gameOver = true;
+    else resetBall(-1);
+  }
+}
+
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = "#090d15";
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.setLineDash([10, 13]);
+  ctx.strokeStyle = "#344056";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(W / 2, 0);
+  ctx.lineTo(W / 2, H);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  ctx.textAlign = "center";
+  ctx.font = "bold 54px Arial";
+  ctx.fillStyle = "#aebbd0";
+  ctx.fillText(world.leftScore, W * 0.25, 70);
+  ctx.fillText(world.rightScore, W * 0.75, 70);
+
+  ctx.shadowBlur = 18;
+  ctx.fillStyle = "#55f7ff";
+  ctx.shadowColor = "#55f7ff";
+  ctx.fillRect(45, world.leftY - paddleH / 2, paddleW, paddleH);
+
+  ctx.fillStyle = "#ff4fd8";
+  ctx.shadowColor = "#ff4fd8";
+  ctx.fillRect(W - 45 - paddleW, world.rightY - paddleH / 2,
+               paddleW, paddleH);
+
+  ctx.beginPath();
+  ctx.arc(world.ball.x, world.ball.y, ballR, 0, Math.PI * 2);
+  ctx.fillStyle = "#ffffff";
+  ctx.shadowColor = "#ffffff";
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  if (mode === "online" && !onlineReady) {
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "20px Arial";
+    ctx.fillText("Waiting for player...", W / 2, H - 25);
+  }
+
+  if (world.gameOver) {
+    ctx.fillStyle = "#000000cc";
+    ctx.fillRect(0, H / 2 - 55, W, 110);
+    ctx.fillStyle = "#ffe66d";
+    ctx.font = "bold 34px Arial";
+    ctx.fillText("MATCH OVER", W / 2, H / 2 - 5);
+    ctx.font = "20px Arial";
+    ctx.fillStyle = "#ffffff";
+    const winner = world.leftScore > world.rightScore
+      ? (mode === "online" ? "Left player wins!" : "You win!")
+      : (mode === "online" ? "Right player wins!" : "Computer wins!");
+    ctx.fillText(winner, W / 2, H / 2 + 30);
+  }
+}
+
+function frame(now) {
+  const dt = Math.min((now - (lastTime || now)) / 1000, 0.03);
+  lastTime = now;
+
+  if (mode === "cpu" || (mode === "online" && role === "host" && onlineReady)) {
+    update(dt);
+  }
+
+  if (mode === "online" && role === "host" && onlineReady &&
+      conn && conn.open && now - sendTime > 33) {
+    conn.send({ type: "state", world });
+    sendTime = now;
+  }
+
+  draw();
+  requestAnimationFrame(frame);
+}
+
+document.getElementById("cpuBtn").addEventListener("click", startCPU);
+document.getElementById("createBtn").addEventListener("click", createRoom);
+document.getElementById("joinBtn").addEventListener("click", joinRoom);
+document.getElementById("restartBtn").addEventListener("click", () => {
+  world = freshWorld();
+  setStatus(mode === "online"
+    ? (onlineReady ? "Match restarted." : "Waiting for player...")
+    : "Match restarted.");
+});
+
+world = freshWorld();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
