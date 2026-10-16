@@ -3,981 +3,404 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Neon Pong Arcade</title>
-
-<!-- PeerJS enables online multiplayer on GitHub Pages -->
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
-
 <style>
-* { box-sizing: border-box; }
-
-body {
-  margin: 0;
-  min-height: 100vh;
-  background: #10141d;
-  color: #f4f6ff;
-  font-family: Arial, Helvetica, sans-serif;
-  display: flex;
-  justify-content: center;
-  padding: 20px;
-}
-
-.app { width: min(1100px, 100%); }
-
-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-bottom: 16px;
-}
-
-h1 {
-  margin: 0;
-  font-size: clamp(25px, 5vw, 42px);
-  letter-spacing: 3px;
-}
-
-h1 span { color: #55f5d5; }
-
-.subtitle {
-  color: #a8b2c7;
-  font-size: 13px;
-  margin-top: 7px;
-}
-
-.panel {
-  background: #191f2c;
-  border: 1px solid #343e52;
-  border-radius: 12px;
-  padding: 12px;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 12px;
-}
-
-label {
-  color: #aebbd1;
-  font-size: 13px;
-}
-
-select, input, button {
-  font: inherit;
-  border-radius: 7px;
-  padding: 10px 12px;
-}
-
-select, input {
-  color: white;
-  background: #101622;
-  border: 1px solid #3b4860;
-  max-width: 100%;
-}
-
-button {
-  cursor: pointer;
-  border: 1px solid #55f5d5;
-  background: #55f5d5;
-  color: #10141d;
-  font-weight: bold;
-  transition: transform .12s, filter .12s;
-}
-
-button:hover { filter: brightness(1.12); }
-button:active { transform: scale(.97); }
-
-button.secondary {
-  color: #f4f6ff;
-  background: #252e40;
-  border-color: #45536d;
-}
-
-button:disabled {
-  opacity: .5;
-  cursor: not-allowed;
-}
-
-#onlinePanel {
-  display: none;
-  align-items: center;
-}
-
-#roomCode {
-  font-weight: bold;
-  letter-spacing: 3px;
-  color: #55f5d5;
-  font-size: 20px;
-}
-
-#status {
-  color: #c5cde0;
-  font-size: 13px;
-  flex: 1;
-  min-width: 180px;
-}
-
-.game {
-  background: #090d14;
-  border: 1px solid #344258;
-  border-radius: 12px;
-  padding: 10px;
-  box-shadow: 0 0 30px #0008;
-}
-
-canvas {
-  display: block;
-  width: 100%;
-  aspect-ratio: 5 / 3;
-  background: #090d14;
-  border-radius: 6px;
-  cursor: crosshair;
-  touch-action: none;
-}
-
-.scoreboard {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  text-align: center;
-  padding: 16px 5px 5px;
-}
-
-.player-name {
-  font-size: 12px;
-  letter-spacing: 2px;
-  color: #9eabc1;
-}
-
-.score {
-  font-size: 38px;
-  font-weight: bold;
-  margin-top: 4px;
-}
-
-.left-score { color: #55f5d5; }
-.right-score { color: #ff719c; }
-
-.help {
-  color: #a8b2c7;
-  font-size: 13px;
-  line-height: 1.7;
-  margin-top: 13px;
-}
-
-@media (max-width: 600px) {
-  body { padding: 10px; }
-  .panel { gap: 8px; }
-  select, input, button { padding: 9px; }
-  #status { min-width: 100%; }
-}
+*{box-sizing:border-box}
+body{margin:0;padding:18px;background:#10141d;color:#f4f6ff;font-family:Arial,sans-serif;display:flex;justify-content:center}
+.app{width:min(1100px,100%)}
+header,.panel{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+header{margin-bottom:16px}
+h1{font-size:clamp(26px,5vw,42px);letter-spacing:3px;margin:0}
+h1 span{color:#55f5d5}
+.subtitle,.help{color:#a8b2c7;font-size:13px;line-height:1.7;margin-top:7px}
+.panel{background:#191f2c;border:1px solid #343e52;border-radius:12px;padding:12px;margin-bottom:12px}
+label{font-size:13px;color:#aebbd1}
+select,input,button{font:inherit;padding:10px 12px;border-radius:7px}
+select,input{color:white;background:#101622;border:1px solid #3b4860;max-width:100%}
+button{cursor:pointer;background:#55f5d5;color:#10141d;border:1px solid #55f5d5;font-weight:bold}
+button.secondary{background:#252e40;color:#fff;border-color:#45536d}
+button:hover{filter:brightness(1.12)}
+#onlinePanel{display:none;justify-content:flex-start}
+#roomCode{color:#55f5d5;font-size:20px;letter-spacing:3px;font-weight:bold}
+#status{flex:1;min-width:180px;color:#c5cde0;font-size:13px}
+.game{background:#090d14;border:1px solid #344258;border-radius:12px;padding:10px}
+canvas{width:100%;aspect-ratio:5/3;display:block;background:#090d14;border-radius:6px;touch-action:none;cursor:crosshair}
+.scoreboard{display:grid;grid-template-columns:1fr 1fr;text-align:center;padding:16px 5px 5px}
+.player-name{font-size:12px;letter-spacing:2px;color:#9eabc1}
+.score{font-size:38px;font-weight:bold;margin-top:4px}
+.left-score{color:#55f5d5}.right-score{color:#ff719c}
+@media(max-width:600px){body{padding:9px}.panel{gap:8px}select,input,button{padding:9px}#status{min-width:100%}}
 </style>
 </head>
-
 <body>
 <div class="app">
-  <header>
-    <div>
-      <h1>NEON <span>PONG</span></h1>
-      <div class="subtitle">CLASSIC ARCADE • CHALLENGE YOURSELF</div>
-    </div>
-    <button id="startBtn">START GAME</button>
-  </header>
+<header>
+ <div><h1>NEON <span>PONG</span></h1><div class="subtitle">CLASSIC ARCADE • CHALLENGE YOURSELF</div></div>
+ <button id="startBtn">START GAME</button>
+</header>
 
-  <div class="panel">
-    <label for="mode">GAME MODE</label>
-    <select id="mode">
-      <option value="cpu">Play vs Computer</option>
-      <option value="two">Two Players (Local)</option>
-      <option value="online">Online Multiplayer</option>
-    </select>
+<div class="panel">
+ <label for="mode">MODE</label>
+ <select id="mode">
+  <option value="cpu">Play vs Computer</option>
+  <option value="two">Two Players (Local)</option>
+  <option value="online">Online Multiplayer</option>
+ </select>
+ <label id="diffLabel" for="difficulty">DIFFICULTY</label>
+ <select id="difficulty">
+  <option value="easy">Easy</option>
+  <option value="medium" selected>Medium</option>
+  <option value="hard">Hard</option>
+ </select>
+ <button class="secondary" id="pauseBtn">PAUSE</button>
+ <button class="secondary" id="resetBtn">RESET</button>
+</div>
 
-    <label id="diffLabel" for="difficulty">DIFFICULTY</label>
-    <select id="difficulty">
-      <option value="easy">Easy</option>
-      <option value="medium" selected>Medium</option>
-      <option value="hard">Hard</option>
-    </select>
+<div class="panel" id="onlinePanel">
+ <button id="createBtn">CREATE ROOM</button>
+ <span>ROOM: <span id="roomCode">------</span></span>
+ <button class="secondary" id="copyBtn">COPY CODE</button>
+ <input id="joinInput" maxlength="6" placeholder="Friend's code">
+ <button id="joinBtn">JOIN ROOM</button>
+ <button class="secondary" id="leaveBtn">LEAVE</button>
+</div>
 
-    <button class="secondary" id="pauseBtn">PAUSE</button>
-    <button class="secondary" id="resetBtn">RESET</button>
-  </div>
+<div class="panel"><div id="status">Press START GAME to play!</div></div>
 
-  <div class="panel" id="onlinePanel">
-    <button id="createBtn">CREATE ROOM</button>
-    <span>ROOM: <span id="roomCode">------</span></span>
-    <button class="secondary" id="copyBtn">COPY CODE</button>
-    <input id="joinInput" placeholder="Enter friend's code" maxlength="6">
-    <button id="joinBtn">JOIN ROOM</button>
-    <button class="secondary" id="leaveBtn">LEAVE</button>
-  </div>
+<div class="game">
+ <canvas id="gameCanvas" width="1000" height="600"></canvas>
+ <div class="scoreboard">
+  <div><div class="player-name" id="leftName">YOU</div><div class="score left-score" id="leftScore">0</div></div>
+  <div><div class="player-name" id="rightName">CPU</div><div class="score right-score" id="rightScore">0</div></div>
+ </div>
+</div>
 
-  <div class="panel">
-    <div id="status">Press START GAME to play!</div>
-  </div>
-
-  <div class="game">
-    <canvas id="gameCanvas" width="1000" height="600"></canvas>
-    <div class="scoreboard">
-      <div>
-        <div class="player-name" id="leftName">YOU</div>
-        <div class="score left-score" id="leftScore">0</div>
-      </div>
-      <div>
-        <div class="player-name" id="rightName">CPU</div>
-        <div class="score right-score" id="rightScore">0</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="help">
-    <strong>Controls:</strong> Move your mouse over the game to move your paddle.
-    In local two-player mode, Player 1 uses W/S and Player 2 uses the mouse.
-    <br>
-    <strong>Online:</strong> The room creator controls the left paddle.
-    The person who joins controls the right paddle. The room creator starts the game.
-    <br>
-    <strong>Goal:</strong> First player to reach 7 points wins. The ball gradually speeds up!
-  </div>
+<div class="help">
+ <b>Controls:</b> In computer mode, use W/S, the arrow keys, or mouse for your paddle.
+ In local two-player mode, Player 1 uses W/S and Player 2 uses the arrow keys or mouse.
+ Online: host controls the left paddle; guest controls the right paddle. Mouse works for either player's own paddle.
+ <br>First to 7 points wins. The ball gets faster over time. Collect glowing power-ups!
+</div>
 </div>
 
 <script>
 "use strict";
 
-const $ = id => document.getElementById(id);
-const canvas = $("gameCanvas");
-const ctx = canvas.getContext("2d");
+const $=id=>document.getElementById(id);
+const canvas=$("gameCanvas"),ctx=canvas.getContext("2d");
+const W=canvas.width,H=canvas.height,PW=13,PH=105,BR=10,WIN=7;
+let leftY=H/2-PH/2,rightY=H/2-PH/2;
+let ball={x:W/2,y:H/2,vx:5.8,vy:2.5};
+let leftScore=0,rightScore=0,running=false,paused=false,gameOver=false;
+let lastTime=0,serveDelay=0,keys={},mouseY=H/2,message="PRESS START";
+let powerup=null,powerTimer=0,leftBoost=1,rightBoost=1;
+let peer=null,conn=null,onlineRole=null,roomCode="",connected=false,opponentPresent=false;
+let lastStateSend=0,lastPaddleSend=0,isLeaving=false;
 
-const W = canvas.width;
-const H = canvas.height;
-const PADDLE_W = 13;
-const PADDLE_H = 105;
-const BALL_R = 10;
-const WIN_SCORE = 7;
+const gameMode=()=> $("mode").value;
+const isOnline=()=>gameMode()==="online";
+const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
 
-let leftY = H / 2 - PADDLE_H / 2;
-let rightY = H / 2 - PADDLE_H / 2;
-let ball = { x: W / 2, y: H / 2, vx: 6, vy: 3 };
-let leftScore = 0;
-let rightScore = 0;
-let running = false;
-let paused = false;
-let gameOver = false;
-let lastTime = 0;
-let elapsed = 0;
-let serveDelay = 0;
-let keys = {};
-let mouseY = H / 2;
-let message = "PRESS START";
-let powerup = null;
-let powerTimer = 0;
-let leftBoost = 1;
-let rightBoost = 1;
-
-let peer = null;
-let conn = null;
-let onlineRole = null;
-let roomCode = "";
-let connected = false;
-let opponentPresent = false;
-let lastStateSend = 0;
-let lastPaddleSend = 0;
-let lastPaddleReceived = 0;
-let isLeaving = false;
-
-function mode() {
-  return $("mode").value;
+function status(s){$("status").textContent=s}
+function updateScores(){$("leftScore").textContent=leftScore;$("rightScore").textContent=rightScore}
+function settings(){
+ const d=$("difficulty").value;
+ if(d==="easy")return{speed:4.7,ai:.65};
+ if(d==="hard")return{speed:7,ai:1};
+ return{speed:5.8,ai:.82};
 }
-
-function isOnline() {
-  return mode() === "online";
+function resetBall(dir=Math.random()<.5?-1:1){
+ const speed=settings().speed;
+ ball={x:W/2,y:H/2,vx:speed*dir,vy:(Math.random()*2-1)*speed*.55};
+ serveDelay=.6;
 }
-
-function setStatus(text) {
-  $("status").textContent = text;
+function reset(){
+ running=false;paused=false;gameOver=false;
+ powerup=null;powerTimer=0;leftBoost=rightBoost=1;
+ leftY=rightY=H/2-PH/2;leftScore=rightScore=0;
+ resetBall();message=isOnline()&&onlineRole==="guest"?"WAIT FOR HOST":"PRESS START";
+ $("startBtn").textContent="START GAME";$("pauseBtn").textContent="PAUSE";
+ updateScores();
+ if(isOnline()&&onlineRole==="host")sendState(true);
 }
-
-function updateScores() {
-  $("leftScore").textContent = leftScore;
-  $("rightScore").textContent = rightScore;
+function startGame(){
+ if(isOnline()){
+  if(!connected||!opponentPresent){status("Create a room and wait for your friend.");return}
+  if(onlineRole==="guest"){status("The host starts the game.");return}
+ }
+ if(gameOver)reset();
+ running=true;paused=false;gameOver=false;message="";
+ $("startBtn").textContent="RESTART";$("pauseBtn").textContent="PAUSE";
+ status("Game in progress!");
+ if(isOnline()&&onlineRole==="host")sendState(true);
 }
-
-function clamp(value, min, max) {
-  return Math.max(min, Math.min(max, value));
+function togglePause(){
+ if(!running||gameOver)return;
+ if(isOnline()&&onlineRole==="guest"){status("The host controls pause.");return}
+ paused=!paused;message=paused?"PAUSED":"";
+ $("pauseBtn").textContent=paused?"RESUME":"PAUSE";
+ if(isOnline()&&onlineRole==="host")sendState(true);
 }
-
-function difficultySettings() {
-  const d = $("difficulty").value;
-  if (d === "easy") return { speed: 4.7, ai: 0.65 };
-  if (d === "hard") return { speed: 7.0, ai: 1.0 };
-  return { speed: 5.8, ai: 0.82 };
+function endGame(winner){
+ running=false;paused=false;gameOver=true;message=winner+" WINS!";
+ $("startBtn").textContent="PLAY AGAIN";status(message);
+ if(isOnline()&&onlineRole==="host")sendState(true);
 }
-
-function resetBall(direction = Math.random() < .5 ? -1 : 1) {
-  ball.x = W / 2;
-  ball.y = H / 2;
-  const settings = difficultySettings();
-  const speed = settings.speed;
-  ball.vx = speed * direction;
-  ball.vy = (Math.random() * 2 - 1) * speed * .65;
-  serveDelay = .65;
+function movePaddle(y,side){
+ if(side==="left")leftY=clamp(y-PH/2,0,H-PH);
+ else rightY=clamp(y-PH/2,0,H-PH);
 }
-
-function reset() {
-  running = false;
-  paused = false;
-  gameOver = false;
-  elapsed = 0;
-  powerup = null;
-  powerTimer = 0;
-  leftBoost = 1;
-  rightBoost = 1;
-  leftY = H / 2 - PADDLE_H / 2;
-  rightY = H / 2 - PADDLE_H / 2;
-  leftScore = 0;
-  rightScore = 0;
-  resetBall();
-  message = isOnline() && onlineRole === "guest"
-    ? "WAIT FOR HOST"
-    : "PRESS START";
-  $("startBtn").textContent = "START GAME";
-  $("pauseBtn").textContent = "PAUSE";
-  updateScores();
-
-  if (isOnline() && onlineRole === "host") sendState(true);
+function sendPaddlePosition(){
+ if(!isOnline()||!conn||!conn.open)return;
+ const now=performance.now();if(now-lastPaddleSend<25)return;lastPaddleSend=now;
+ conn.send({type:"paddle",side:onlineRole,y:onlineRole==="host"?leftY:rightY});
 }
-
-function startGame() {
-  if (isOnline()) {
-    if (!connected || !opponentPresent) {
-      setStatus("Create a room and wait for your friend to join.");
-      return;
-    }
-    if (onlineRole === "guest") {
-      setStatus("The room creator starts the game.");
-      return;
-    }
-  }
-
-  if (gameOver) reset();
-  running = true;
-  paused = false;
-  gameOver = false;
-  message = "";
-  $("startBtn").textContent = "RESTART";
-  $("pauseBtn").textContent = "PAUSE";
-  setStatus(isOnline() ? "Online match in progress!" : "Game in progress!");
-  if (isOnline() && onlineRole === "host") sendState(true);
+function sendState(force=false){
+ if(!conn||!conn.open||onlineRole!=="host")return;
+ const now=performance.now();if(!force&&now-lastStateSend<33)return;lastStateSend=now;
+ conn.send({type:"state",leftY,rightY,ball:{...ball},leftScore,rightScore,running,paused,gameOver,message,powerup,powerTimer,leftBoost,rightBoost});
 }
-
-function togglePause() {
-  if (!running || gameOver) return;
-  if (isOnline() && onlineRole === "guest") {
-    setStatus("The room creator controls the game.");
-    return;
-  }
-  paused = !paused;
-  $("pauseBtn").textContent = paused ? "RESUME" : "PAUSE";
-  message = paused ? "PAUSED" : "";
-  if (isOnline() && onlineRole === "host") sendState(true);
+function applyState(s){
+ if(!s||s.type!=="state")return;
+ leftY=s.leftY;rightY=s.rightY;ball=s.ball;
+ leftScore=s.leftScore;rightScore=s.rightScore;
+ running=s.running;paused=s.paused;gameOver=s.gameOver;message=s.message||"";
+ powerup=s.powerup||null;powerTimer=s.powerTimer||0;
+ leftBoost=s.leftBoost||1;rightBoost=s.rightBoost||1;
+ $("startBtn").textContent=gameOver?"PLAY AGAIN":running?"RESTART":"START GAME";
+ $("pauseBtn").textContent=paused?"RESUME":"PAUSE";updateScores();
 }
-
-function endGame(winner) {
-  running = false;
-  paused = false;
-  gameOver = true;
-  message = winner + " WINS!";
-  $("startBtn").textContent = "PLAY AGAIN";
-  setStatus(message);
-  if (isOnline() && onlineRole === "host") sendState(true);
+function randomCode(){
+ const chars="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+ return Array.from({length:6},()=>chars[Math.floor(Math.random()*chars.length)]).join("");
 }
-
-function movePaddleTo(y, side) {
-  const py = clamp(y - PADDLE_H / 2, 0, H - PADDLE_H);
-  if (side === "left") leftY = py;
-  else rightY = py;
+function disconnectSocket(){
+ isLeaving=true;
+ try{if(conn)conn.close()}catch(e){}
+ try{if(peer)peer.destroy()}catch(e){}
+ conn=null;peer=null;onlineRole=null;roomCode="";
+ connected=opponentPresent=false;
+ $("roomCode").textContent="------";
+ $("createBtn").disabled=$("joinBtn").disabled=false;
+ isLeaving=false;
 }
-
-function setOnlineMessage(text) {
-  setStatus(text);
+function setupConnection(c,role){
+ conn=c;onlineRole=role;
+ conn.on("open",()=>{
+  connected=opponentPresent=true;
+  status(role==="host"?"Friend connected! You can start the game.":"Connected! Waiting for the host.");
+  if(role==="host")sendState(true);
+ });
+ conn.on("data",data=>{
+  if(!data)return;
+  if(data.type==="paddle"&&onlineRole==="host"&&data.side==="guest")rightY=clamp(data.y,0,H-PH);
+  if(data.type==="paddle"&&onlineRole==="guest"&&data.side==="host")leftY=clamp(data.y,0,H-PH);
+  if(data.type==="state"&&onlineRole==="guest")applyState(data);
+ });
+ conn.on("close",()=>{
+  connected=opponentPresent=false;
+  if(!isLeaving){running=false;message="DISCONNECTED";status("Friend disconnected. Create or join a room again.");}
+ });
+ conn.on("error",e=>{console.error(e);status("Connection error. Try again.");});
 }
-
-function randomCode() {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  let result = "";
-  for (let i = 0; i < 6; i++) {
-    result += chars[Math.floor(Math.random() * chars.length)];
-  }
-  return result;
-}
-
-function sendState(force = false) {
-  if (!conn || conn.open !== true) return;
-  const now = performance.now();
-  if (!force && now - lastStateSend < 33) return;
-  lastStateSend = now;
-
-  conn.send({
-    type: "state",
-    leftY, rightY,
-    ball: { x: ball.x, y: ball.y, vx: ball.vx, vy: ball.vy },
-    leftScore, rightScore,
-    running, paused, gameOver, message,
-    powerup, powerTimer, leftBoost, rightBoost
-  });
-}
-
-function applyState(s) {
-  if (!s || s.type !== "state") return;
-
-  leftY = s.leftY;
-  rightY = s.rightY;
-  ball = s.ball;
-  leftScore = s.leftScore;
-  rightScore = s.rightScore;
-  running = s.running;
-  paused = s.paused;
-  gameOver = s.gameOver;
-  message = s.message || "";
-  powerup = s.powerup || null;
-  powerTimer = s.powerTimer || 0;
-  leftBoost = s.leftBoost || 1;
-  rightBoost = s.rightBoost || 1;
-
-  $("startBtn").textContent = gameOver ? "PLAY AGAIN" : running ? "RESTART" : "START GAME";
-  $("pauseBtn").textContent = paused ? "RESUME" : "PAUSE";
-  updateScores();
-}
-
-function disconnectSocket() {
-  isLeaving = true;
-  connected = false;
-  opponentPresent = false;
-
-  if (conn) {
-    try { conn.close(); } catch (e) {}
-  }
-  if (peer) {
-    try { peer.destroy(); } catch (e) {}
-  }
-
-  conn = null;
-  peer = null;
-  onlineRole = null;
-  roomCode = "";
-  $("roomCode").textContent = "------";
-  $("createBtn").disabled = false;
-  $("joinBtn").disabled = false;
-  $("copyBtn").disabled = false;
-  isLeaving = false;
-}
-
-function setupConnection(connection, role) {
-  conn = connection;
-  onlineRole = role;
-
-  conn.on("open", () => {
-    connected = true;
-    opponentPresent = true;
-    setOnlineMessage("Connected! " +
-      (role === "host" ? "You are the host. Press START GAME." : "Waiting for the host to start."));
-    if (role === "host") sendState(true);
-  });
-
-  conn.on("data", data => {
-    if (!data) return;
-
-    if (data.type === "paddle" && onlineRole === "host") {
-      rightY = clamp(data.y, 0, H - PADDLE_H);
-    }
-
-    if (data.type === "state" && onlineRole === "guest") {
-      applyState(data);
-    }
-
-    if (data.type === "reset" && onlineRole === "host") {
-      reset();
-    }
-  });
-
-  conn.on("close", () => {
-    connected = false;
-    opponentPresent = false;
-    if (!isLeaving) {
-      setOnlineMessage("Your friend disconnected. Create or join a room again.");
-      running = false;
-      message = "DISCONNECTED";
-    }
-  });
-
-  conn.on("error", err => {
-    console.error(err);
-    setOnlineMessage("Connection problem. Please try again.");
-  });
-}
-
-function createRoom() {
-  if (!isOnline()) return;
+function createRoom(){
+ disconnectSocket();onlineRole="host";roomCode=randomCode();
+ $("roomCode").textContent=roomCode;$("createBtn").disabled=$("joinBtn").disabled=true;
+ status("Creating room...");
+ peer=new Peer("neonpong-"+roomCode);
+ peer.on("open",()=>status("Room created! Share code "+roomCode+"."));
+ peer.on("connection",c=>{if(conn){c.close();return}setupConnection(c,"host")});
+ peer.on("error",e=>{
+  console.error(e);status(e.type==="unavailable-id"?"Code already in use. Try creating another room.":"Could not create room. Check your internet.");
   disconnectSocket();
-  onlineRole = "host";
-  roomCode = randomCode();
-  $("roomCode").textContent = roomCode;
-  $("createBtn").disabled = true;
-  $("joinBtn").disabled = true;
-  setOnlineMessage("Creating room...");
-
-  try {
-    peer = new Peer("neonpong-" + roomCode);
-
-    peer.on("open", () => {
-      setOnlineMessage("Room created! Share code " + roomCode + " with your friend.");
-    });
-
-    peer.on("connection", connection => {
-      if (conn) {
-        connection.close();
-        return;
-      }
-      setupConnection(connection, "host");
-    });
-
-    peer.on("error", err => {
-      console.error(err);
-      setOnlineMessage(
-        err.type === "unavailable-id"
-          ? "Room code collision. Click CREATE ROOM again."
-          : "Could not create room. Try again or check your internet."
-      );
-      $("createBtn").disabled = false;
-      $("joinBtn").disabled = false;
-      if (peer) {
-        try { peer.destroy(); } catch (e) {}
-      }
-      peer = null;
-    });
-  } catch (e) {
-    setOnlineMessage("Could not create room. Please try again.");
-    $("createBtn").disabled = false;
-    $("joinBtn").disabled = false;
-  }
+ });
+}
+function joinRoom(){
+ const code=$("joinInput").value.trim().toUpperCase();
+ if(!/^[A-HJ-NP-Z2-9]{6}$/.test(code)){status("Enter a valid six-character room code.");return}
+ disconnectSocket();onlineRole="guest";roomCode=code;
+ $("roomCode").textContent=code;$("createBtn").disabled=$("joinBtn").disabled=true;
+ status("Connecting to room "+code+"...");
+ peer=new Peer();
+ peer.on("open",()=>{
+  const c=peer.connect("neonpong-"+code,{reliable:true});
+  setupConnection(c,"guest");
+  setTimeout(()=>{if(!connected&&onlineRole==="guest")status("Still connecting. Check the code and host connection.");},9000);
+ });
+ peer.on("error",e=>{console.error(e);status("Could not connect. Check the code and try again.");$("createBtn").disabled=$("joinBtn").disabled=false});
+}
+function leaveRoom(){
+ disconnectSocket();running=false;paused=false;message="ROOM LEFT";status("You left the room.");draw();
 }
 
-function joinRoom() {
-  if (!isOnline()) return;
-  const code = $("joinInput").value.trim().toUpperCase();
+function update(dt){
+ if(!running||paused||gameOver)return;
+ if(isOnline()&&onlineRole==="guest")return;
+ const step=dt/16.667;
 
-  if (!/^[A-HJ-NP-Z2-9]{6}$/.test(code)) {
-    setOnlineMessage("Enter the six-character room code.");
-    return;
-  }
+ const up=keys.ArrowUp||keys.w||keys.W;
+ const down=keys.ArrowDown||keys.s||keys.S;
+ const speed=8*step;
 
-  disconnectSocket();
-  onlineRole = "guest";
-  roomCode = code;
-  $("roomCode").textContent = code;
-  $("createBtn").disabled = true;
-  $("joinBtn").disabled = true;
-  setOnlineMessage("Connecting to room " + code + "...");
+ // CPU mode: player controls the left paddle.
+ // Local two-player: W/S control left, arrows control right.
+ // Online: host controls left, guest controls right.
+ if(gameMode()==="two"){
+  if(keys.w||keys.W)leftY-=speed;
+  if(keys.s||keys.S)leftY+=speed;
+  if(keys.ArrowUp)rightY-=speed;
+  if(keys.ArrowDown)rightY+=speed;
+ }else if(isOnline()){
+  if(onlineRole==="host"){if(up)leftY-=speed;if(down)leftY+=speed}
+  if(onlineRole==="guest"){if(up)rightY-=speed;if(down)rightY+=speed}
+ }else{
+  if(up)leftY-=speed;
+  if(down)leftY+=speed;
+  const ai=settings(),target=ball.y-PH/2,diff=target-rightY;
+  rightY+=clamp(diff,-ai.speed*ai.ai*step,ai.speed*ai.ai*step);
+ }
 
-  try {
-    peer = new Peer();
+ leftY=clamp(leftY,0,H-PH);rightY=clamp(rightY,0,H-PH);
 
-    peer.on("open", () => {
-      const connection = peer.connect("neonpong-" + code, {
-        reliable: true
-      });
-      setupConnection(connection, "guest");
+ if(isOnline())sendPaddlePosition();
+ if(serveDelay>0){serveDelay-=dt/1000;return}
 
-      setTimeout(() => {
-        if (!connected && onlineRole === "guest") {
-          setOnlineMessage("Still connecting. Check the code and make sure your friend is hosting.");
-        }
-      }, 9000);
-    });
+ ball.x+=ball.vx*step;ball.y+=ball.vy*step;
+ if(ball.y-BR<=0){ball.y=BR;ball.vy=Math.abs(ball.vy)}
+ if(ball.y+BR>=H){ball.y=H-BR;ball.vy=-Math.abs(ball.vy)}
 
-    peer.on("error", err => {
-      console.error(err);
-      setOnlineMessage("Could not connect. Check the code and try again.");
-      $("createBtn").disabled = false;
-      $("joinBtn").disabled = false;
-    });
-  } catch (e) {
-    setOnlineMessage("Could not connect. Please try again.");
-    $("createBtn").disabled = false;
-    $("joinBtn").disabled = false;
-  }
+ if(ball.vx<0&&ball.x-BR<=73&&ball.x+BR>=60&&ball.y>=leftY&&ball.y<=leftY+PH){
+  ball.x=73+BR;ball.vx=Math.abs(ball.vx)*1.045;
+  ball.vy=((ball.y-(leftY+PH/2))/(PH/2))*6.2;
+ }
+ if(ball.vx>0&&ball.x+BR>=W-73&&ball.x-BR<=W-60&&ball.y>=rightY&&ball.y<=rightY+PH){
+  ball.x=W-73-BR;ball.vx=-Math.abs(ball.vx)*1.045;
+  ball.vy=((ball.y-(rightY+PH/2))/(PH/2))*6.2;
+ }
+
+ // Slow speed increase during rallies.
+ const ballSpeed=Math.hypot(ball.vx,ball.vy);
+ if(ballSpeed<13){ball.vx*=1+.00012*step;ball.vy*=1+.00012*step}
+
+ if(!powerup&&Math.random()<.0015){
+  powerup={x:W*(.3+Math.random()*.4),y:80+Math.random()*(H-160),type:Math.random()<.5?"big":"fast"};
+ }
+ if(powerup&&Math.hypot(ball.x-powerup.x,ball.y-powerup.y)<24){
+  if(powerup.type==="big"){if(ball.vx<0)leftBoost=1.35;else rightBoost=1.35}
+  else{ball.vx*=1.2;ball.vy*=1.2}
+  powerTimer=6;powerup=null;
+ }
+ if(powerTimer>0){powerTimer-=dt/1000;if(powerTimer<=0)leftBoost=rightBoost=1}
+
+ if(ball.x<-BR){
+  rightScore++;updateScores();
+  if(rightScore>=WIN){endGame(gameMode()==="cpu"?"CPU":gameMode()==="online"?"FRIEND":"PLAYER 2");return}
+  resetBall(1);
+ }
+ if(ball.x>W+BR){
+  leftScore++;updateScores();
+  if(leftScore>=WIN){endGame(gameMode()==="online"?"HOST":"PLAYER 1");return}
+  resetBall(-1);
+ }
+ if(isOnline()&&onlineRole==="host")sendState();
 }
 
-function leaveRoom() {
-  disconnectSocket();
-  running = false;
-  paused = false;
-  message = "ONLINE ROOM CLOSED";
-  setStatus("You left the online room.");
-  $("startBtn").textContent = "START GAME";
-  draw();
+function drawPaddle(x,y,color,boost){
+ const h=PH*boost,py=clamp(y-(h-PH)/2,0,H-h);
+ ctx.save();ctx.shadowColor=color;ctx.shadowBlur=22;ctx.fillStyle=color;
+ ctx.beginPath();ctx.roundRect(x,py,PW,h,6);ctx.fill();ctx.restore();
 }
+function draw(){
+ ctx.clearRect(0,0,W,H);ctx.fillStyle="#090d14";ctx.fillRect(0,0,W,H);
+ const g=ctx.createRadialGradient(W/2,H/2,10,W/2,H/2,270);
+ g.addColorStop(0,"#142232");g.addColorStop(1,"#090d14");
+ ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+ ctx.save();ctx.strokeStyle="#334158";ctx.lineWidth=3;ctx.setLineDash([12,14]);
+ ctx.beginPath();ctx.moveTo(W/2,0);ctx.lineTo(W/2,H);ctx.stroke();ctx.restore();
 
-function handlePointScored() {
-  if (ball.x < -BALL_R) {
-    rightScore++;
-    updateScores();
-    if (rightScore >= WIN_SCORE) {
-      endGame(mode() === "cpu" ? "CPU" : mode() === "online" ? "FRIEND" : "PLAYER 2");
-      return;
-    }
-    resetBall(1);
-  } else if (ball.x > W + BALL_R) {
-    leftScore++;
-    updateScores();
-    if (leftScore >= WIN_SCORE) {
-      endGame(mode() === "cpu" ? "YOU" : mode() === "online" ? "YOU" : "PLAYER 1");
-      return;
-    }
-    resetBall(-1);
-  }
-}
+ drawPaddle(60,leftY,"#55f5d5",leftBoost);
+ drawPaddle(W-73,rightY,"#ff719c",rightBoost);
+ ctx.save();ctx.shadowColor="#fff";ctx.shadowBlur=25;ctx.fillStyle="#fff";
+ ctx.beginPath();ctx.arc(ball.x,ball.y,BR,0,Math.PI*2);ctx.fill();ctx.restore();
 
-function spawnPowerup() {
-  if (powerup || Math.random() > .0015) return;
-  const types = ["big", "fast"];
-  powerup = {
-    x: W * (.3 + Math.random() * .4),
-    y: 80 + Math.random() * (H - 160),
-    type: types[Math.floor(Math.random() * types.length)]
-  };
-}
+ if(powerup){
+  ctx.save();ctx.shadowColor=powerup.type==="big"?"#55f5d5":"#ffd166";ctx.shadowBlur=20;
+  ctx.fillStyle=powerup.type==="big"?"#55f5d5":"#ffd166";
+  ctx.beginPath();ctx.arc(powerup.x,powerup.y,13,0,Math.PI*2);ctx.fill();ctx.restore();
+  ctx.fillStyle="#10141d";ctx.font="bold 15px Arial";ctx.textAlign="center";
+  ctx.fillText(powerup.type==="big"?"B":"F",powerup.x,powerup.y+5);
+ }
 
-function update(dt) {
-  if (!running || paused || gameOver) return;
-  if (isOnline() && onlineRole === "guest") return;
-
-  const step = dt / 16.667;
-  elapsed += dt;
-  if (serveDelay > 0) {
-    serveDelay -= dt / 1000;
-    spawnPowerup();
-    return;
-  }
-
-  const settings = difficultySettings();
-
-  if (mode() === "two") {
-    if (keys["w"] || keys["W"]) leftY -= 8 * step;
-    if (keys["s"] || keys["S"]) leftY += 8 * step;
-  } else if (isOnline()) {
-    if (onlineRole === "host") {
-      if (keys["w"] || keys["W"]) leftY -= 8 * step;
-      if (keys["s"] || keys["S"]) leftY += 8 * step;
-    }
-  } else {
-    movePaddleTo(mouseY, "left");
-  }
-
-  if (mode() === "cpu") {
-    const target = ball.y - PADDLE_H / 2;
-    const diff = target - rightY;
-    rightY += clamp(diff, -settings.speed * settings.ai * step, settings.speed * settings.ai * step);
-  }
-
-  leftY = clamp(leftY, 0, H - PADDLE_H);
-  rightY = clamp(rightY, 0, H - PADDLE_H);
-
-  ball.x += ball.vx * step;
-  ball.y += ball.vy * step;
-
-  // Bounce off top and bottom walls.
-  if (ball.y - BALL_R <= 0) {
-    ball.y = BALL_R;
-    ball.vy = Math.abs(ball.vy);
-  }
-  if (ball.y + BALL_R >= H) {
-    ball.y = H - BALL_R;
-    ball.vy = -Math.abs(ball.vy);
-  }
-
-  // Paddle collisions.
-  if (
-    ball.vx < 0 &&
-    ball.x - BALL_R <= 60 + PADDLE_W &&
-    ball.x + BALL_R >= 60 &&
-    ball.y >= leftY &&
-    ball.y <= leftY + PADDLE_H
-  ) {
-    ball.x = 60 + PADDLE_W + BALL_R;
-    const hit = (ball.y - (leftY + PADDLE_H / 2)) / (PADDLE_H / 2);
-    ball.vx = Math.abs(ball.vx) * 1.045;
-    ball.vy = hit * 6.2;
-  }
-
-  if (
-    ball.vx > 0 &&
-    ball.x + BALL_R >= W - 60 - PADDLE_W &&
-    ball.x - BALL_R <= W - 60 &&
-    ball.y >= rightY &&
-    ball.y <= rightY + PADDLE_H
-  ) {
-    ball.x = W - 60 - PADDLE_W - BALL_R;
-    const hit = (ball.y - (rightY + PADDLE_H / 2)) / (PADDLE_H / 2);
-    ball.vx = -Math.abs(ball.vx) * 1.045;
-    ball.vy = hit * 6.2;
-  }
-
-  // Gradually increase speed during longer rallies.
-  const speed = Math.hypot(ball.vx, ball.vy);
-  if (speed < 13) {
-    ball.vx *= 1 + 0.00012 * step;
-    ball.vy *= 1 + 0.00012 * step;
-  }
-
-  spawnPowerup();
-
-  if (powerup) {
-    const dx = ball.x - powerup.x;
-    const dy = ball.y - powerup.y;
-
-    if (Math.hypot(dx, dy) < 24) {
-      if (powerup.type === "big") {
-        if (ball.vx < 0) leftBoost = 1.35;
-        else rightBoost = 1.35;
-      } else {
-        ball.vx *= 1.2;
-        ball.vy *= 1.2;
-      }
-      powerTimer = 6;
-      powerup = null;
-    }
-  }
-
-  if (powerTimer > 0) {
-    powerTimer -= dt / 1000;
-    if (powerTimer <= 0) {
-      leftBoost = 1;
-      rightBoost = 1;
-    }
-  }
-
-  handlePointScored();
-
-  if (isOnline() && onlineRole === "host") sendState();
-}
-
-function drawPaddle(x, y, color, boost) {
-  const h = PADDLE_H * boost;
-  const adjustedY = clamp(y - (h - PADDLE_H) / 2, 0, H - h);
-
-  ctx.save();
-  ctx.shadowColor = color;
-  ctx.shadowBlur = 22;
-  ctx.fillStyle = color;
-  ctx.beginPath();
-  ctx.roundRect(x, adjustedY, PADDLE_W, h, 6);
-  ctx.fill();
+ if(!running||paused||gameOver||serveDelay>0){
+  ctx.save();ctx.textAlign="center";ctx.shadowColor="#55f5d5";ctx.shadowBlur=16;
+  ctx.fillStyle="#fff";ctx.font="bold 32px Arial";ctx.fillText(message||"READY",W/2,H/2-8);
+  ctx.shadowBlur=0;ctx.fillStyle="#a8b2c7";ctx.font="16px Arial";
+  if(!gameOver&&!paused)ctx.fillText("First to 7 points wins",W/2,H/2+27);
   ctx.restore();
+ }
 }
 
-function draw() {
-  ctx.clearRect(0, 0, W, H);
-  ctx.fillStyle = "#090d14";
-  ctx.fillRect(0, 0, W, H);
-
-  // Center dashed line.
-  ctx.save();
-  ctx.strokeStyle = "#2d3a4f";
-  ctx.lineWidth = 3;
-  ctx.setLineDash([12, 14]);
-  ctx.beginPath();
-  ctx.moveTo(W / 2, 0);
-  ctx.lineTo(W / 2, H);
-  ctx.stroke();
-  ctx.restore();
-
-  // Soft center glow.
-  const gradient = ctx.createRadialGradient(W/2, H/2, 10, W/2, H/2, 270);
-  gradient.addColorStop(0, "#142232");
-  gradient.addColorStop(1, "#090d14");
-  ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, W, H);
-
-  // Draw line on top of the background glow.
-  ctx.save();
-  ctx.strokeStyle = "#334158";
-  ctx.setLineDash([12, 14]);
-  ctx.beginPath();
-  ctx.moveTo(W/2, 0);
-  ctx.lineTo(W/2, H);
-  ctx.stroke();
-  ctx.restore();
-
-  drawPaddle(60, leftY, "#55f5d5", leftBoost);
-  drawPaddle(W - 60 - PADDLE_W, rightY, "#ff719c", rightBoost);
-
-  // Ball glow.
-  ctx.save();
-  ctx.shadowColor = "#ffffff";
-  ctx.shadowBlur = 25;
-  ctx.fillStyle = "#ffffff";
-  ctx.beginPath();
-  ctx.arc(ball.x, ball.y, BALL_R, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.restore();
-
-  if (powerup) {
-    ctx.save();
-    ctx.shadowColor = powerup.type === "big" ? "#55f5d5" : "#ffd166";
-    ctx.shadowBlur = 22;
-    ctx.fillStyle = powerup.type === "big" ? "#55f5d5" : "#ffd166";
-    ctx.beginPath();
-    ctx.arc(powerup.x, powerup.y, 13, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-    ctx.fillStyle = "#10141d";
-    ctx.font = "bold 15px Arial";
-    ctx.textAlign = "center";
-    ctx.fillText(powerup.type === "big" ? "B" : "F", powerup.x, powerup.y + 5);
-  }
-
-  if (!running || paused || gameOver || serveDelay > 0) {
-    ctx.save();
-    ctx.textAlign = "center";
-    ctx.shadowColor = "#55f5d5";
-    ctx.shadowBlur = 16;
-    ctx.fillStyle = "#ffffff";
-    ctx.font = "bold 32px Arial";
-    ctx.fillText(message || "READY", W/2, H/2 - 8);
-    ctx.shadowBlur = 0;
-    ctx.fillStyle = "#a8b2c7";
-    ctx.font = "16px Arial";
-    if (!gameOver && !paused) {
-      ctx.fillText(
-        isOnline() && onlineRole === "guest"
-          ? "Waiting for the host..."
-          : "First to 7 points wins",
-        W/2, H/2 + 27
-      );
-    }
-    ctx.restore();
-  }
+function mouseControl(e){
+ const r=canvas.getBoundingClientRect();
+ mouseY=(e.clientY-r.top)/r.height*H;
+ if(isOnline()){
+  if(onlineRole==="host")movePaddle(mouseY,"left");
+  if(onlineRole==="guest")movePaddle(mouseY,"right");
+ }else if(gameMode()==="two"){
+  movePaddle(mouseY,"right");
+ }else{
+  movePaddle(mouseY,"left");
+ }
+ sendPaddlePosition();
 }
+canvas.addEventListener("mousemove",mouseControl);
+canvas.addEventListener("touchmove",e=>{
+ e.preventDefault();const t=e.touches[0];if(t)mouseControl({clientX:t.clientX,clientY:t.clientY});
+},{passive:false});
 
-function frame(now) {
-  const dt = lastTime ? Math.min(now - lastTime, 40) : 16.667;
-  lastTime = now;
+window.addEventListener("keydown",e=>{
+ keys[e.key]=true;
+ if(["ArrowUp","ArrowDown"," "].includes(e.key))e.preventDefault();
+ if(e.key===" "&&!e.repeat){if(!running||gameOver)startGame();else togglePause()}
+});
+window.addEventListener("keyup",e=>{keys[e.key]=false});
 
-  update(dt);
-  draw();
-
-  requestAnimationFrame(frame);
-}
-
-// Mouse controls the left paddle in CPU mode and right paddle in local
-// two-player mode. Online host controls left with W/S; guest controls right.
-function canvasMouse(e) {
-  const rect = canvas.getBoundingClientRect();
-  const y = (e.clientY - rect.top) / rect.height * H;
-  mouseY = y;
-
-  if (mode() === "cpu") {
-    movePaddleTo(y, "left");
-  } else if (mode() === "two") {
-    movePaddleTo(y, "right");
-  } else if (mode() === "online" && onlineRole === "guest") {
-    movePaddleTo(y, "right");
-    const now = performance.now();
-    if (conn && conn.open && now - lastPaddleSend > 25) {
-      lastPaddleSend = now;
-      conn.send({ type: "paddle", y: rightY });
-    }
-  }
-}
-
-canvas.addEventListener("mousemove", canvasMouse);
-canvas.addEventListener("touchmove", e => {
-  e.preventDefault();
-  const t = e.touches[0];
-  if (!t) return;
-  canvasMouse({ clientX: t.clientX, clientY: t.clientY });
-}, { passive: false });
-
-window.addEventListener("keydown", e => {
-  keys[e.key] = true;
-  if (["ArrowUp", "ArrowDown", " "].includes(e.key)) e.preventDefault();
-
-  if (e.key === " " && !e.repeat) {
-    if (!running || gameOver) startGame();
-    else togglePause();
-  }
+$("startBtn").addEventListener("click",()=>{
+ if(running&&!gameOver&&!(isOnline()&&onlineRole==="guest"))reset();
+ startGame();
+});
+$("pauseBtn").addEventListener("click",togglePause);
+$("resetBtn").addEventListener("click",reset);
+$("createBtn").addEventListener("click",createRoom);
+$("joinBtn").addEventListener("click",joinRoom);
+$("leaveBtn").addEventListener("click",leaveRoom);
+$("copyBtn").addEventListener("click",async()=>{
+ if(!roomCode){status("Create a room first.");return}
+ try{await navigator.clipboard.writeText(roomCode);status("Room code copied!")}
+ catch(e){$("joinInput").value=roomCode;status("Select and copy the room code shown above.")}
 });
 
-window.addEventListener("keyup", e => {
-  keys[e.key] = false;
+$("mode").addEventListener("change",()=>{
+ disconnectSocket();
+ const m=gameMode();
+ $("onlinePanel").style.display=m==="online"?"flex":"none";
+ $("diffLabel").style.display=m==="cpu"?"inline-block":"none";
+ $("difficulty").style.display=m==="cpu"?"inline-block":"none";
+ $("leftName").textContent=m==="two"?"PLAYER 1":m==="online"?"HOST":"YOU";
+ $("rightName").textContent=m==="two"?"PLAYER 2":m==="online"?"FRIEND":"CPU";
+ status(m==="online"?"Create a room or enter your friend's code.":"Press START GAME to play!");
+ reset();
 });
-
-$("startBtn").addEventListener("click", () => {
-  if (running && !gameOver && !(isOnline() && onlineRole === "guest")) {
-    reset();
-  }
-  startGame();
-});
-
-$("pauseBtn").addEventListener("click", togglePause);
-$("resetBtn").addEventListener("click", reset);
-
-$("mode").addEventListener("change", () => {
-  const selectedMode = mode();
-
-  disconnectSocket();
-  running = false;
-  paused = false;
-  $("onlinePanel").style.display = selectedMode === "online" ? "flex" : "none";
-  $("diffLabel").style.display = selectedMode === "cpu" ? "inline-flex" : "none";
-  $("difficulty").style.display = selectedMode === "cpu" ? "inline-block" : "none";
-
-  $("leftName").textContent =
-    selectedMode === "two" ? "PLAYER 1" :
-    selectedMode === "online" ? "HOST" : "YOU";
-
-  $("rightName").textContent =
-    selectedMode === "two" ? "PLAYER 2" :
-    selectedMode === "online" ? "FRIEND" : "CPU";
-
-  if (selectedMode === "online") {
-    setStatus("Create a room or enter your friend's code.");
-  } else {
-    setStatus("Press START GAME to play!");
-  }
-
-  reset();
-});
-
-$("createBtn").addEventListener("click", createRoom);
-$("joinBtn").addEventListener("click", joinRoom);
-$("leaveBtn").addEventListener("click", leaveRoom);
-
-$("copyBtn").addEventListener("click", async () => {
-  if (!roomCode) {
-    setStatus("Create a room first.");
-    return;
-  }
-
-  try {
-    await navigator.clipboard.writeText(roomCode);
-    setStatus("Room code copied: " + roomCode);
-  } catch (e) {
-    $("joinInput").value = roomCode;
-    setStatus("Your room code is shown above. Select and copy it.");
-  }
-});
-
-$("difficulty").addEventListener("change", () => {
-  if (!running) resetBall();
-});
-
-window.addEventListener("beforeunload", disconnectSocket);
+$("difficulty").addEventListener("change",()=>{if(!running)resetBall()});
+window.addEventListener("beforeunload",disconnectSocket);
 
 reset();
+function frame(now){
+ const dt=lastTime?Math.min(now-lastTime,40):16.667;
+ lastTime=now;update(dt);draw();requestAnimationFrame(frame);
+}
 requestAnimationFrame(frame);
 </script>
 </body>
