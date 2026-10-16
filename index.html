@@ -1,421 +1,836 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Neon Pong Online</title>
+<title>Neon Pong Arcade</title>
 
 <style>
-* { box-sizing: border-box; }
-body {
-  margin: 0;
-  min-height: 100vh;
-  background: #10131d;
-  color: #f5f7ff;
-  font-family: Arial, sans-serif;
-  text-align: center;
-  padding: 22px 12px;
+*{box-sizing:border-box}
+body{
+ margin:0;min-height:100vh;padding:20px 10px;
+ background:radial-gradient(ellipse at top,#17274e,#060916 70%);
+ color:#f4f8ff;font-family:Arial,sans-serif;text-align:center
 }
-h1 {
-  color: #55f7ff;
-  text-shadow: 0 0 15px #00d9ff;
-  margin: 8px;
-}
-p { color: #bdc7db; }
-.panel {
-  max-width: 950px;
-  margin: 16px auto;
-  padding: 14px;
-  border: 1px solid #35415c;
-  border-radius: 12px;
-  background: #191e2c;
-}
-button, input {
-  padding: 11px 13px;
-  margin: 5px;
-  border-radius: 7px;
-  border: 1px solid #52617d;
-  font-size: 15px;
-}
-button {
-  background: #263b56;
-  color: white;
-  cursor: pointer;
-}
-button:hover { background: #17617a; }
-input {
-  background: #0e1420;
-  color: white;
-  width: 150px;
-  text-transform: uppercase;
-}
-#status { min-height: 24px; color: #70f7ce; }
-#roomCode {
-  color: #ffe66d;
-  font-size: 24px;
-  letter-spacing: 5px;
-  font-weight: bold;
-}
-canvas {
-  display: block;
-  width: 100%;
-  max-width: 900px;
-  margin: 14px auto;
-  background: #090d15;
-  border: 2px solid #394763;
-  border-radius: 8px;
-  box-shadow: 0 0 18px #00bcd455;
-  cursor: crosshair;
-  touch-action: none;
-}
-.small { font-size: 13px; color: #aab6cc; }
+h1{color:#5fffe0;letter-spacing:6px;text-shadow:0 0 20px #5fffe088}
+.settings{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin:15px}
+select,button,input{padding:10px;border-radius:8px;font-weight:bold}
+select{background:#101d38;color:white;border:1px solid #456080}
+button{border:0;background:#5fffe0;cursor:pointer;margin:4px}
+button:hover{filter:brightness(1.2)}
+input{background:#101d38;color:white;border:1px solid #456080;width:125px}
+canvas{width:min(95vw,900px);height:auto;background:#091126;border:2px solid #385e85;border-radius:12px;touch-action:none}
+.scores{display:flex;justify-content:center;gap:90px;font-size:30px}
+.scores small{display:block;font-size:12px;letter-spacing:3px;color:#a9bfdf}
+#leftScore{color:#5fffe0}
+#rightScore{color:#ff5cb8}
+#status{color:#5fffe0;font-weight:bold;min-height:24px;margin:12px}
+p{color:#b9cce8;line-height:1.6}
+#onlinePanel{display:none;max-width:650px;margin:12px auto;padding:12px;border:1px solid #385e85;border-radius:10px;background:#0b1428}
+#roomCode{color:#ffe66b;font-size:22px;letter-spacing:4px;font-weight:bold;margin:8px}
+.small{font-size:13px}
 </style>
 </head>
 
 <body>
 <h1>NEON PONG</h1>
-<p>Move your mouse over the game to control your paddle.</p>
+<p>ARCADE EDITION · FIRST TO 11 WINS</p>
 
-<div class="panel">
-  <button id="cpuBtn">Play vs Computer</button>
-  <button id="createBtn">Create Online Room</button>
-  <input id="codeInput" maxlength="5" placeholder="ROOM CODE">
-  <button id="joinBtn">Join Room</button>
-  <p id="status">Choose a game mode to begin.</p>
-  <div id="roomCode"></div>
-  <p class="small">Online: the host controls the left paddle; the guest controls the right.</p>
+<div class="settings">
+ <label>Mode:
+  <select id="mode">
+   <option value="cpu">vs Computer</option>
+   <option value="two">Two Players</option>
+   <option value="online">Online Multiplayer</option>
+  </select>
+ </label>
+
+ <label id="diffLabel">Difficulty:
+  <select id="difficulty">
+   <option value="easy">Easy</option>
+   <option value="medium" selected>Medium</option>
+   <option value="hard">Hard</option>
+  </select>
+ </label>
+
+ <label>Sound:
+  <select id="sound">
+   <option value="on">On</option>
+   <option value="off">Off</option>
+  </select>
+ </label>
 </div>
 
-<canvas id="game" width="900" height="500"></canvas>
-
-<div class="panel">
-  <p>First to 11 points wins.</p>
-  <button id="restartBtn">Restart Match</button>
-  <p class="small">Online play requires an internet connection. Keep this page open while playing.</p>
+<div id="onlinePanel">
+ <button id="createRoom">Create Online Room</button>
+ <input id="codeInput" maxlength="5" placeholder="ROOM CODE">
+ <button id="joinRoom">Join Room</button>
+ <div id="roomCode"></div>
+ <p class="small">The host controls the left paddle. The guest controls the right paddle.</p>
 </div>
 
-<!-- PeerJS connects players through WebRTC -->
+<div class="scores">
+ <div><small id="leftName">YOU</small><span id="leftScore">0</span></div>
+ <div><small id="rightName">CPU</small><span id="rightScore">0</span></div>
+</div>
+
+<canvas id="game" width="900" height="560"></canvas>
+
+<div>
+ <button id="start">▶ Start / Continue</button>
+ <button id="pause">Ⅱ Pause</button>
+ <button id="restart">↻ Restart</button>
+</div>
+
+<div id="status">Press Start to play!</div>
+
+<p id="controlsText">
+Player 1: W / S, arrow keys, or mouse<br>
+First to 11 points wins!
+</p>
+
+<p>
+Power-ups: 🟢 Bigger left paddle · 💗 Bigger right paddle<br>
+🟡 Slow ball · 🟣 Speed boost
+</p>
+
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
-
 <script>
-const canvas = document.getElementById("game");
-const ctx = canvas.getContext("2d");
-const statusEl = document.getElementById("status");
-const roomEl = document.getElementById("roomCode");
+const canvas=document.getElementById("game");
+const ctx=canvas.getContext("2d");
+const $=id=>document.getElementById(id);
+const W=900,H=560;
+const paddleW=15,paddleH=108;
+const leftX=38,rightX=847;
+const WIN_SCORE=11;
 
-const W = canvas.width, H = canvas.height;
-const paddleH = 100, paddleW = 12, ballR = 9;
-const WIN_SCORE = 11;
+let leftY=280,rightY=280;
+let leftScore=0,rightScore=0;
+let ball,playing=false,paused=false,gameOver=false;
+let keys={};
+let lastTime=0;
+let particles=[],power=null,nextPower=5;
+let bigLeft=0,bigRight=0,slow=0,boost=0;
+let audio;
 
-let mode = "cpu";
-let role = "host";
-let peer = null, conn = null;
-let onlineReady = false;
-let lastTime = 0, sendTime = 0;
-let world;
+// Online multiplayer state
+let peer=null,conn=null;
+let onlineReady=false;
+let onlineRole="host";
+let sendTime=0;
+let inputY=H/2;
 
-function freshWorld() {
-  return {
-    leftY: H / 2,
-    rightY: H / 2,
-    ball: { x: W / 2, y: H / 2, vx: 320, vy: 170 },
-    leftScore: 0,
-    rightScore: 0,
-    gameOver: false
-  };
+function sound(freq=450,duration=.07,type="sine"){
+ if($("sound").value==="off")return;
+ try{
+  audio=audio||new(window.AudioContext||window.webkitAudioContext)();
+  if(audio.state==="suspended")audio.resume();
+  const osc=audio.createOscillator();
+  const gain=audio.createGain();
+  osc.type=type;
+  osc.frequency.value=freq;
+  gain.gain.setValueAtTime(.04,audio.currentTime);
+  gain.gain.exponentialRampToValueAtTime(.001,audio.currentTime+duration);
+  osc.connect(gain);
+  gain.connect(audio.destination);
+  osc.start();
+  osc.stop(audio.currentTime+duration);
+ }catch(e){}
 }
 
-function resetBall(direction) {
-  world.ball = {
-    x: W / 2, y: H / 2,
-    vx: 320 * direction,
-    vy: (Math.random() * 180) - 90
-  };
+function beep(kind){
+ if(kind==="hit")sound(600,.05,"triangle");
+ if(kind==="wall")sound(280,.04);
+ if(kind==="power"){
+  sound(750,.1);
+  setTimeout(()=>sound(1000,.12),80);
+ }
+ if(kind==="score"){
+  sound(380,.12);
+  setTimeout(()=>sound(540,.15),100);
+ }
 }
 
-function setStatus(message) {
-  statusEl.textContent = message;
+function clamp(n,min,max){
+ return Math.max(min,Math.min(max,n));
 }
 
-function closeOnline() {
-  onlineReady = false;
-  if (conn) { try { conn.close(); } catch (_) {} }
-  if (peer) { try { peer.destroy(); } catch (_) {} }
-  conn = null;
-  peer = null;
-  roomEl.textContent = "";
+function currentH(side){
+ return paddleH*((side==="left"?bigLeft:bigRight)>0?1.5:1);
 }
 
-function startCPU() {
-  closeOnline();
-  mode = "cpu";
-  role = "host";
-  world = freshWorld();
-  setStatus("Playing against the computer.");
+function serve(direction){
+ ball={
+  x:W/2,y:H/2,r:11,
+  vx:direction*5.2,
+  vy:(Math.random()-.5)*5
+ };
+ power=null;
+ nextPower=5+Math.random()*4;
 }
 
-function randomCode() {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  let code = "";
-  for (let i = 0; i < 5; i++) {
-    code += chars[Math.floor(Math.random() * chars.length)];
-  }
-  return code;
+function reset(){
+ leftScore=rightScore=0;
+ $("leftScore").textContent=0;
+ $("rightScore").textContent=0;
+ leftY=rightY=H/2;
+ inputY=H/2;
+ playing=paused=gameOver=false;
+ bigLeft=bigRight=slow=boost=0;
+ particles=[];
+ keys={};
+ serve(Math.random()<.5?-1:1);
+ $("start").textContent="▶ Start";
+ $("pause").textContent="Ⅱ Pause";
+ $("status").textContent="Press Start to play!";
+ draw();
 }
 
-function createRoom() {
-  closeOnline();
-  mode = "online";
-  role = "host";
-  world = freshWorld();
-  setStatus("Creating your room...");
-  roomEl.textContent = "";
+function startGame(){
+ if(gameOver)reset();
+ playing=true;
+ paused=false;
+ gameOver=false;
+ $("status").textContent="Game on! Collect the power-ups!";
+ $("start").textContent="▶ Continue";
+ $("pause").textContent="Ⅱ Pause";
+}
 
-  const code = randomCode();
-  peer = new Peer("neonpong" + code);
+function togglePause(){
+ if(gameOver)return;
+ if(!playing&&!paused){
+  startGame();
+  return;
+ }
+ paused=!paused;
+ playing=!paused;
+ $("status").textContent=paused?"Paused":"Game on!";
+ $("pause").textContent=paused?"▶ Resume":"Ⅱ Pause";
+}
 
-  peer.on("open", () => {
-    roomEl.textContent = "ROOM CODE: " + code;
-    setStatus("Room ready. Send your friend the code and this website link.");
+function burst(x,y,color,n=12){
+ for(let i=0;i<n;i++){
+  const a=Math.random()*Math.PI*2;
+  const s=1+Math.random()*4;
+  particles.push({
+   x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,
+   life:30,color
   });
-
-  peer.on("connection", incoming => {
-    if (conn) {
-      incoming.close();
-      return;
-    }
-    setupConnection(incoming);
-  });
-
-  peer.on("error", err => {
-    setStatus("Connection error: " + err.type +
-      ". Try creating a room again.");
-  });
+ }
 }
 
-function joinRoom() {
-  const code = document.getElementById("codeInput").value
-    .trim().toUpperCase();
+function score(side){
+ if(side==="left")leftScore++;
+ else rightScore++;
 
-  if (!/^[A-HJ-NP-Z2-9]{5}$/.test(code)) {
-    setStatus("Enter a valid five-character room code.");
-    return;
-  }
+ $("leftScore").textContent=leftScore;
+ $("rightScore").textContent=rightScore;
 
-  closeOnline();
-  mode = "online";
-  role = "guest";
-  world = freshWorld();
-  setStatus("Connecting to room " + code + "...");
-  roomEl.textContent = "ROOM CODE: " + code;
+ beep("score");
+ burst(ball.x,ball.y,side==="left"?"#5fffe0":"#ff5cb8",25);
 
-  peer = new Peer();
-
-  peer.on("open", () => {
-    const outgoing = peer.connect("neonpong" + code, {
-      reliable: true
-    });
-    setupConnection(outgoing);
-  });
-
-  peer.on("error", err => {
-    setStatus("Could not connect: " + err.type +
-      ". Check the code and try again.");
-  });
+ if(leftScore>=WIN_SCORE||rightScore>=WIN_SCORE){
+  gameOver=true;
+  playing=false;
+  paused=false;
+  $("status").textContent=leftScore>rightScore
+   ?"🏆 "+($("mode").value==="online"?"LEFT PLAYER":"PLAYER 1")+" WINS!"
+   :"🏆 "+($("mode").value==="two"?"PLAYER 2":
+      $("mode").value==="online"?"RIGHT PLAYER":"COMPUTER")+" WINS!";
+ }else{
+  playing=false;
+  paused=false;
+  bigLeft=bigRight=slow=boost=0;
+  serve(side==="left"?1:-1);
+  $("status").textContent="Point scored! Press Start for the next serve.";
+ }
 }
 
-function setupConnection(connection) {
-  conn = connection;
-
-  conn.on("open", () => {
-    onlineReady = true;
-    setStatus(role === "host"
-      ? "Friend connected! You control the left paddle."
-      : "Connected! You control the right paddle.");
-  });
-
-  conn.on("data", data => {
-    if (!data || typeof data !== "object") return;
-
-    if (role === "host" && data.type === "paddle") {
-      if (Number.isFinite(data.y)) {
-        world.rightY = clamp(data.y, paddleH / 2, H - paddleH / 2);
-      }
-    }
-
-    if (role === "guest" && data.type === "state" && data.world) {
-      world = data.world;
-    }
-  });
-
-  conn.on("close", () => {
-    onlineReady = false;
-    setStatus("Your friend disconnected.");
-  });
-
-  conn.on("error", () => {
-    setStatus("Connection problem. Try creating a new room.");
-  });
+function spawnPower(){
+ const types=[
+  {type:"left",color:"#5fffe0",label:"L+"},
+  {type:"right",color:"#ff5cb8",label:"R+"},
+  {type:"slow",color:"#ffe66b",label:"S"},
+  {type:"boost",color:"#b69cff",label:"⚡"}
+ ];
+ power={
+  ...types[Math.floor(Math.random()*types.length)],
+  x:W*.3+Math.random()*W*.4,
+  y:70+Math.random()*(H-140),
+  r:21,life:9
+ };
 }
 
-function clamp(value, min, max) {
-  return Math.max(min, Math.min(max, value));
+function collectPower(){
+ const p=power;
+ if(p.type==="left")bigLeft=8;
+ if(p.type==="right")bigRight=8;
+ if(p.type==="slow"){
+  slow=4.5;
+  ball.vx*=.7;
+  ball.vy*=.7;
+ }
+ if(p.type==="boost"){
+  boost=4.5;
+  ball.vx*=1.3;
+  ball.vy*=1.3;
+ }
+ $("status").textContent="POWER-UP COLLECTED!";
+ beep("power");
+ burst(p.x,p.y,p.color,25);
+ power=null;
 }
 
-canvas.addEventListener("pointermove", event => {
-  const rect = canvas.getBoundingClientRect();
-  const y = (event.clientY - rect.top) * H / rect.height;
-  const safeY = clamp(y, paddleH / 2, H - paddleH / 2);
+// Move the player's paddle with the keyboard.
+// CPU: W/S or arrows control the left paddle.
+// Two-player: W/S left, arrows right.
+// Online: the host controls left; the guest controls right.
+function updateControls(step){
+ const mode=$("mode").value;
+ let leftDirection=0;
+ let rightDirection=0;
 
-  if (mode === "online" && role === "guest") {
-    if (conn && conn.open) conn.send({ type: "paddle", y: safeY });
-  } else {
-    world.leftY = safeY;
+ if(mode==="cpu"){
+  if(keys.w||keys.s||keys.arrowup||keys.arrowdown){
+   if(keys.w||keys.arrowup)leftDirection-=1;
+   if(keys.s||keys.arrowdown)leftDirection+=1;
   }
-});
+  leftY+=leftDirection*7*step;
+  leftY=clamp(leftY,currentH("left")/2+8,H-currentH("left")/2-8);
+ }
 
-function update(dt) {
-  if (world.gameOver) return;
-
-  // Computer moves towards the ball in single-player mode.
-  if (mode === "cpu") {
-    const target = world.ball.y;
-    world.rightY += clamp(target - world.rightY, -300 * dt, 300 * dt);
-    world.rightY = clamp(world.rightY, paddleH / 2, H - paddleH / 2);
+ if(mode==="two"){
+  if(keys.w||keys.s){
+   if(keys.w)leftDirection-=1;
+   if(keys.s)leftDirection+=1;
   }
+  if(keys.arrowup)rightDirection-=1;
+  if(keys.arrowdown)rightDirection+=1;
 
-  const b = world.ball;
-  b.x += b.vx * dt;
-  b.y += b.vy * dt;
+  leftY+=leftDirection*7*step;
+  rightY+=rightDirection*7*step;
 
-  // Gradually increase speed over time.
-  const speedGrowth = Math.pow(1.025, dt);
-  b.vx *= speedGrowth;
-  b.vy *= speedGrowth;
+  leftY=clamp(leftY,currentH("left")/2+8,H-currentH("left")/2-8);
+  rightY=clamp(rightY,currentH("right")/2+8,H-currentH("right")/2-8);
+ }
 
-  if (b.y < ballR || b.y > H - ballR) {
-    b.vy *= -1;
-    b.y = clamp(b.y, ballR, H - ballR);
-  }
+ if(mode==="online"){
+  let direction=0;
+  if(keys.w||keys.arrowup)direction-=1;
+  if(keys.s||keys.arrowdown)direction+=1;
 
-  // Left paddle.
-  if (b.vx < 0 && b.x - ballR <= 45 + paddleW &&
-      b.x > 35 && Math.abs(b.y - world.leftY) < paddleH / 2 + ballR) {
-    b.x = 45 + paddleW + ballR;
-    b.vx = Math.min(Math.abs(b.vx) * 1.04, 750);
-    b.vy += (b.y - world.leftY) * 4;
-    b.vx = Math.abs(b.vx);
-  }
+  inputY+=direction*7*step;
+  inputY=clamp(inputY,currentH(onlineRole==="host"?"left":"right")/2+8,
+    H-currentH(onlineRole==="host"?"left":"right")/2-8);
 
-  // Right paddle.
-  if (b.vx > 0 && b.x + ballR >= W - 45 - paddleW &&
-      b.x < W - 35 && Math.abs(b.y - world.rightY) < paddleH / 2 + ballR) {
-    b.x = W - 45 - paddleW - ballR;
-    b.vx = -Math.min(Math.abs(b.vx) * 1.04, 750);
-    b.vy += (b.y - world.rightY) * 4;
-  }
-
-  if (b.x < -ballR) {
-    world.rightScore++;
-    if (world.rightScore >= WIN_SCORE) world.gameOver = true;
-    else resetBall(1);
-  }
-
-  if (b.x > W + ballR) {
-    world.leftScore++;
-    if (world.leftScore >= WIN_SCORE) world.gameOver = true;
-    else resetBall(-1);
-  }
+  if(onlineRole==="host")leftY=inputY;
+  else rightY=inputY;
+ }
 }
 
-function draw() {
-  ctx.clearRect(0, 0, W, H);
-  ctx.fillStyle = "#090d15";
-  ctx.fillRect(0, 0, W, H);
+function update(dt){
+ const step=Math.min(2,dt/16.667);
 
-  ctx.setLineDash([10, 13]);
-  ctx.strokeStyle = "#344056";
-  ctx.lineWidth = 3;
+ particles=particles.filter(p=>p.life>0);
+ particles.forEach(p=>{
+  p.x+=p.vx*step;
+  p.y+=p.vy*step;
+  p.life-=step;
+  p.vx*=.985;
+  p.vy*=.985;
+ });
+
+ if(!playing||paused||gameOver)return;
+
+ bigLeft=Math.max(0,bigLeft-dt/1000);
+ bigRight=Math.max(0,bigRight-dt/1000);
+ slow=Math.max(0,slow-dt/1000);
+ boost=Math.max(0,boost-dt/1000);
+
+ const mode=$("mode").value;
+
+ if(mode==="cpu"){
+  const settings={
+   easy:{speed:2.8,error:80},
+   medium:{speed:4.3,error:36},
+   hard:{speed:6.3,error:10}
+  }[$("difficulty").value];
+
+  const aim=ball.y+(Math.random()-.5)*settings.error;
+  if(rightY<aim-8)rightY+=Math.min(settings.speed*step,aim-rightY);
+  if(rightY>aim+8)rightY-=Math.min(settings.speed*step,rightY-aim);
+ }
+
+ rightY=clamp(rightY,currentH("right")/2+8,H-currentH("right")/2-8);
+
+ // Gradually accelerate the ball throughout each rally.
+ const acceleration=Math.pow(1.00008,step);
+ ball.vx*=acceleration;
+ ball.vy*=acceleration;
+
+ // Cap speed so the game remains playable.
+ const maxSpeed=13;
+ const speed=Math.hypot(ball.vx,ball.vy);
+ if(speed>maxSpeed){
+  ball.vx=ball.vx/speed*maxSpeed;
+  ball.vy=ball.vy/speed*maxSpeed;
+ }
+
+ ball.x+=ball.vx*step;
+ ball.y+=ball.vy*step;
+
+ if(ball.y-ball.r<8||ball.y+ball.r>H-8){
+  ball.vy*=-1;
+  ball.y=clamp(ball.y,ball.r+8,H-ball.r-8);
+  beep("wall");
+  burst(ball.x,ball.y,"#ffffff",5);
+ }
+
+ if(ball.vx<0&&ball.x-ball.r<=leftX+paddleW&&ball.x>leftX-8&&
+    Math.abs(ball.y-leftY)<currentH("left")/2+ball.r){
+  ball.x=leftX+paddleW+ball.r;
+  ball.vx=Math.min(10.5,Math.abs(ball.vx)*1.045);
+  ball.vy=((ball.y-leftY)/(currentH("left")/2))*7;
+  beep("hit");
+  burst(ball.x,ball.y,"#5fffe0",8);
+ }
+
+ if(ball.vx>0&&ball.x+ball.r>=rightX&&ball.x<rightX+paddleW+8&&
+    Math.abs(ball.y-rightY)<currentH("right")/2+ball.r){
+  ball.x=rightX-ball.r;
+  ball.vx=-Math.min(10.5,Math.abs(ball.vx)*1.045);
+  ball.vy=((ball.y-rightY)/(currentH("right")/2))*7;
+  beep("hit");
+  burst(ball.x,ball.y,"#ff5cb8",8);
+ }
+
+ if(power){
+  power.life-=dt/1000;
+  if(Math.hypot(ball.x-power.x,ball.y-power.y)<ball.r+power.r){
+   collectPower();
+  }else if(power.life<=0){
+   power=null;
+  }
+ }else{
+  nextPower-=dt/1000;
+  if(nextPower<=0)spawnPower();
+ }
+
+ if(ball.x<-30)score("right");
+ if(ball.x>W+30)score("left");
+}
+
+function rounded(x,y,w,h,r,color,glow){
+ ctx.save();
+ ctx.fillStyle=color;
+ if(glow){
+  ctx.shadowColor=color;
+  ctx.shadowBlur=20;
+ }
+ ctx.beginPath();
+ ctx.roundRect(x,y,w,h,r);
+ ctx.fill();
+ ctx.restore();
+}
+
+function draw(){
+ ctx.clearRect(0,0,W,H);
+
+ const bg=ctx.createLinearGradient(0,0,W,H);
+ bg.addColorStop(0,"#102044");
+ bg.addColorStop(.5,"#081126");
+ bg.addColorStop(1,"#170e2d");
+ ctx.fillStyle=bg;
+ ctx.fillRect(0,0,W,H);
+
+ ctx.strokeStyle="#2d4d74";
+ ctx.lineWidth=2;
+ ctx.strokeRect(12,12,W-24,H-24);
+
+ ctx.setLineDash([12,14]);
+ ctx.beginPath();
+ ctx.moveTo(W/2,12);
+ ctx.lineTo(W/2,H-12);
+ ctx.stroke();
+ ctx.setLineDash([]);
+
+ if(power){
+  ctx.save();
+  ctx.shadowColor=power.color;
+  ctx.shadowBlur=25;
+  ctx.strokeStyle=power.color;
+  ctx.lineWidth=3;
   ctx.beginPath();
-  ctx.moveTo(W / 2, 0);
-  ctx.lineTo(W / 2, H);
+  ctx.arc(power.x,power.y,power.r+Math.sin(performance.now()/150)*3,0,Math.PI*2);
   ctx.stroke();
-  ctx.setLineDash([]);
 
-  ctx.textAlign = "center";
-  ctx.font = "bold 54px Arial";
-  ctx.fillStyle = "#aebbd0";
-  ctx.fillText(world.leftScore, W * 0.25, 70);
-  ctx.fillText(world.rightScore, W * 0.75, 70);
-
-  ctx.shadowBlur = 18;
-  ctx.fillStyle = "#55f7ff";
-  ctx.shadowColor = "#55f7ff";
-  ctx.fillRect(45, world.leftY - paddleH / 2, paddleW, paddleH);
-
-  ctx.fillStyle = "#ff4fd8";
-  ctx.shadowColor = "#ff4fd8";
-  ctx.fillRect(W - 45 - paddleW, world.rightY - paddleH / 2,
-               paddleW, paddleH);
-
+  ctx.fillStyle=power.color+"33";
   ctx.beginPath();
-  ctx.arc(world.ball.x, world.ball.y, ballR, 0, Math.PI * 2);
-  ctx.fillStyle = "#ffffff";
-  ctx.shadowColor = "#ffffff";
+  ctx.arc(power.x,power.y,power.r-2,0,Math.PI*2);
   ctx.fill();
-  ctx.shadowBlur = 0;
 
-  if (mode === "online" && !onlineReady) {
-    ctx.fillStyle = "#ffffff";
-    ctx.font = "20px Arial";
-    ctx.fillText("Waiting for player...", W / 2, H - 25);
-  }
+  ctx.fillStyle=power.color;
+  ctx.font="bold 16px Arial";
+  ctx.textAlign="center";
+  ctx.textBaseline="middle";
+  ctx.fillText(power.label,power.x,power.y);
+  ctx.restore();
+ }
 
-  if (world.gameOver) {
-    ctx.fillStyle = "#000000cc";
-    ctx.fillRect(0, H / 2 - 55, W, 110);
-    ctx.fillStyle = "#ffe66d";
-    ctx.font = "bold 34px Arial";
-    ctx.fillText("MATCH OVER", W / 2, H / 2 - 5);
-    ctx.font = "20px Arial";
-    ctx.fillStyle = "#ffffff";
-    const winner = world.leftScore > world.rightScore
-      ? (mode === "online" ? "Left player wins!" : "You win!")
-      : (mode === "online" ? "Right player wins!" : "Computer wins!");
-    ctx.fillText(winner, W / 2, H / 2 + 30);
-  }
+ rounded(leftX,leftY-currentH("left")/2,paddleW,currentH("left"),8,"#5fffe0",true);
+ rounded(rightX,rightY-currentH("right")/2,paddleW,currentH("right"),8,"#ff5cb8",true);
+
+ ctx.save();
+ ctx.globalAlpha=.2;
+ ctx.fillStyle="#b69cff";
+ ctx.beginPath();
+ ctx.arc(ball.x-ball.vx*1.5,ball.y-ball.vy*1.5,ball.r,0,Math.PI*2);
+ ctx.fill();
+ ctx.restore();
+
+ ctx.save();
+ ctx.shadowColor="#ffffff";
+ ctx.shadowBlur=25;
+ ctx.fillStyle="#ffffff";
+ ctx.beginPath();
+ ctx.arc(ball.x,ball.y,ball.r,0,Math.PI*2);
+ ctx.fill();
+ ctx.restore();
+
+ particles.forEach(p=>{
+  ctx.globalAlpha=Math.max(0,p.life/30);
+  ctx.fillStyle=p.color;
+  ctx.fillRect(p.x,p.y,4,4);
+ });
+ ctx.globalAlpha=1;
+
+ if(!playing||paused||gameOver){
+  ctx.fillStyle="#050916d9";
+  ctx.fillRect(0,0,W,H);
+  ctx.textAlign="center";
+  ctx.textBaseline="middle";
+
+  ctx.fillStyle=gameOver
+   ?(leftScore>rightScore?"#5fffe0":"#ff5cb8")
+   :"#ffffff";
+
+  ctx.shadowColor=ctx.fillStyle;
+  ctx.shadowBlur=20;
+  ctx.font="bold 42px Arial";
+
+  const msg=gameOver
+   ?(leftScore>rightScore
+      ?($("mode").value==="online"?"LEFT PLAYER WINS!":"PLAYER 1 WINS!")
+      :($("mode").value==="two"?"PLAYER 2 WINS!":
+        $("mode").value==="online"?"RIGHT PLAYER WINS!":"CPU WINS!"))
+   :(paused?"PAUSED":(leftScore+rightScore===0?"NEON PONG":"NEXT POINT"));
+
+  ctx.fillText(msg,W/2,H/2-20);
+  ctx.shadowBlur=0;
+  ctx.fillStyle="#bdcce8";
+  ctx.font="18px Arial";
+
+  ctx.fillText(
+   gameOver?"Press Restart to play again":
+   paused?"Press Continue to resume":
+   "Press Start to begin",
+   W/2,H/2+28
+  );
+ }
 }
 
-function frame(now) {
-  const dt = Math.min((now - (lastTime || now)) / 1000, 0.03);
-  lastTime = now;
-
-  if (mode === "cpu" || (mode === "online" && role === "host" && onlineReady)) {
-    update(dt);
-  }
-
-  if (mode === "online" && role === "host" && onlineReady &&
-      conn && conn.open && now - sendTime > 33) {
-    conn.send({ type: "state", world });
-    sendTime = now;
-  }
-
-  draw();
-  requestAnimationFrame(frame);
+// Online state: the host is authoritative for the ball and score.
+function getGameState(){
+ return {
+  leftY,rightY,leftScore,rightScore,
+  ball,playing,paused,gameOver,power,nextPower,
+  bigLeft,bigRight,slow,boost
+ };
 }
 
-document.getElementById("cpuBtn").addEventListener("click", startCPU);
-document.getElementById("createBtn").addEventListener("click", createRoom);
-document.getElementById("joinBtn").addEventListener("click", joinRoom);
-document.getElementById("restartBtn").addEventListener("click", () => {
-  world = freshWorld();
-  setStatus(mode === "online"
-    ? (onlineReady ? "Match restarted." : "Waiting for player...")
-    : "Match restarted.");
+function applyGameState(s){
+ if(!s||!s.ball)return;
+ leftY=s.leftY;
+ rightY=s.rightY;
+ leftScore=s.leftScore;
+ rightScore=s.rightScore;
+ $("leftScore").textContent=leftScore;
+ $("rightScore").textContent=rightScore;
+ ball=s.ball;
+ playing=s.playing;
+ paused=s.paused;
+ gameOver=s.gameOver;
+ power=s.power;
+ nextPower=s.nextPower;
+ bigLeft=s.bigLeft;
+ bigRight=s.bigRight;
+ slow=s.slow;
+ boost=s.boost;
+}
+
+function sendMessage(data){
+ if(conn&&conn.open){
+  try{conn.send(data)}catch(e){}
+ }
+}
+
+function closeOnline(){
+ onlineReady=false;
+ if(conn){try{conn.close()}catch(e){}}
+ if(peer){try{peer.destroy()}catch(e){}}
+ conn=null;
+ peer=null;
+ $("roomCode").textContent="";
+}
+
+function randomCode(){
+ const chars="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+ let code="";
+ for(let i=0;i<5;i++){
+  code+=chars[Math.floor(Math.random()*chars.length)];
+ }
+ return code;
+}
+
+function createOnlineRoom(){
+ closeOnline();
+ onlineRole="host";
+ reset();
+ $("status").textContent="Creating online room...";
+ const code=randomCode();
+
+ if(typeof Peer==="undefined"){
+  $("status").textContent="Online connection library failed to load. Check your internet.";
+  return;
+ }
+
+ peer=new Peer("neonpong"+code);
+
+ peer.on("open",()=>{
+  $("roomCode").textContent="ROOM CODE: "+code;
+  $("status").textContent="Room ready! Send the code and website link to your friend.";
+ });
+
+ peer.on("connection",incoming=>{
+  if(conn){
+   incoming.close();
+   return;
+  }
+  setupConnection(incoming);
+ });
+
+ peer.on("error",err=>{
+  $("status").textContent="Connection error: "+err.type+". Try creating a new room.";
+ });
+}
+
+function joinOnlineRoom(){
+ const code=$("codeInput").value.trim().toUpperCase();
+
+ if(!/^[A-HJ-NP-Z2-9]{5}$/.test(code)){
+  $("status").textContent="Enter a valid five-character room code.";
+  return;
+ }
+
+ closeOnline();
+ onlineRole="guest";
+ reset();
+ $("roomCode").textContent="ROOM CODE: "+code;
+ $("status").textContent="Connecting to room "+code+"...";
+
+ if(typeof Peer==="undefined"){
+  $("status").textContent="Online connection library failed to load. Check your internet.";
+  return;
+ }
+
+ peer=new Peer();
+
+ peer.on("open",()=>{
+  const outgoing=peer.connect("neonpong"+code,{reliable:true});
+  setupConnection(outgoing);
+ });
+
+ peer.on("error",err=>{
+  $("status").textContent="Could not connect: "+err.type+". Check the code and try again.";
+ });
+}
+
+function setupConnection(connection){
+ conn=connection;
+
+ conn.on("open",()=>{
+  onlineReady=true;
+  $("status").textContent=onlineRole==="host"
+   ?"Friend connected! You control the left paddle."
+   :"Connected! You control the right paddle.";
+  inputY=onlineRole==="host"?leftY:rightY;
+ });
+
+ conn.on("data",data=>{
+  if(!data||typeof data!=="object")return;
+
+  if(onlineRole==="host"){
+   if(data.type==="paddle"&&Number.isFinite(data.y)){
+    rightY=clamp(data.y,currentH("right")/2+8,H-currentH("right")/2-8);
+   }
+   if(data.type==="start")startGame();
+   if(data.type==="pause")togglePause();
+   if(data.type==="restart")reset();
+  }else{
+   if(data.type==="state"){
+    const guestY=inputY;
+    applyGameState(data.state);
+    rightY=guestY;
+   }
+  }
+ });
+
+ conn.on("close",()=>{
+  onlineReady=false;
+  $("status").textContent="Your friend disconnected.";
+ });
+
+ conn.on("error",()=>{
+  $("status").textContent="Connection problem. Try creating a new room.";
+ });
+}
+
+function mouseMove(e){
+ const rect=canvas.getBoundingClientRect();
+ const y=(e.clientY-rect.top)*H/rect.height;
+ const mode=$("mode").value;
+
+ if(mode==="online"){
+  inputY=clamp(y,paddleH/2,H-paddleH/2);
+  if(onlineRole==="host"){
+   leftY=inputY;
+  }else{
+   rightY=inputY;
+   sendMessage({type:"paddle",y:inputY});
+  }
+ }else{
+  leftY=clamp(y,currentH("left")/2+8,H-currentH("left")/2-8);
+ }
+}
+
+canvas.addEventListener("pointermove",mouseMove);
+canvas.addEventListener("pointerdown",e=>{
+ if(e.pointerType==="touch"){
+  mouseMove(e);
+  if(!playing&&!gameOver&&$("mode").value!=="online")startGame();
+ }
 });
 
-world = freshWorld();
-requestAnimationFrame(frame);
+document.addEventListener("keydown",e=>{
+ const key=e.key.toLowerCase();
+
+ if(["arrowup","arrowdown"," "].includes(key))e.preventDefault();
+
+ keys[key]=true;
+
+ if(e.code==="Space"&&!e.repeat){
+  if($("mode").value==="online"&&onlineRole==="guest"){
+   sendMessage({type:"pause"});
+  }else{
+   togglePause();
+  }
+ }
+});
+
+document.addEventListener("keyup",e=>{
+ keys[e.key.toLowerCase()]=false;
+});
+
+window.addEventListener("blur",()=>{keys={}});
+
+$("mode").addEventListener("change",()=>{
+ const mode=$("mode").value;
+ closeOnline();
+ reset();
+
+ $("onlinePanel").style.display=mode==="online"?"block":"none";
+ $("diffLabel").style.display=mode==="cpu"?"inline-flex":"none";
+
+ $("leftName").textContent=mode==="two"?"PLAYER 1":
+  mode==="online"?"HOST":"YOU";
+ $("rightName").textContent=mode==="two"?"PLAYER 2":
+  mode==="online"?"GUEST":"CPU";
+
+ $("controlsText").innerHTML=mode==="two"
+  ?"Player 1: W / S or mouse<br>Player 2: ↑ / ↓ arrow keys<br>First to 11 points wins!"
+  :mode==="online"
+   ?"Host: W / S, arrow keys, or mouse<br>Guest: W / S, arrow keys, or mouse<br>First to 11 points wins!"
+   :"Use W / S, arrow keys, or mouse to move your paddle.<br>First to 11 points wins!";
+});
+
+$("createRoom").addEventListener("click",createOnlineRoom);
+$("joinRoom").addEventListener("click",joinOnlineRoom);
+
+$("start").addEventListener("click",()=>{
+ if($("mode").value==="online"&&onlineRole==="guest"){
+  sendMessage({type:"start"});
+ }else{
+  startGame();
+ }
+});
+
+$("pause").addEventListener("click",()=>{
+ if($("mode").value==="online"&&onlineRole==="guest"){
+  sendMessage({type:"pause"});
+ }else{
+  togglePause();
+ }
+});
+
+$("restart").addEventListener("click",()=>{
+ if($("mode").value==="online"&&onlineRole==="guest"){
+  sendMessage({type:"restart"});
+ }else{
+  reset();
+ }
+});
+
+function loop(t){
+ const dt=Math.min(40,t-(lastTime||t));
+ lastTime=t;
+ const mode=$("mode").value;
+ const step=Math.min(2,dt/16.667);
+
+ updateControls(step);
+
+ if(mode!=="online"){
+  update(dt);
+ }else if(onlineRole==="host"){
+  update(dt);
+
+  if(onlineReady&&conn&&conn.open&&t-sendTime>33){
+   sendMessage({type:"state",state:getGameState()});
+   sendTime=t;
+  }
+ }else{
+  // Guest sends paddle input and receives the host's game state.
+  particles=particles.filter(p=>p.life>0);
+  particles.forEach(p=>{
+   p.x+=p.vx*step;
+   p.y+=p.vy*step;
+   p.life-=step;
+   p.vx*=.985;
+   p.vy*=.985;
+  });
+
+  if(onlineReady&&conn&&conn.open&&t-sendTime>33){
+   sendMessage({type:"paddle",y:inputY});
+   sendTime=t;
+  }
+ }
+
+ draw();
+ requestAnimationFrame(loop);
+}
+
+reset();
+requestAnimationFrame(loop);
 </script>
 </body>
 </html>
